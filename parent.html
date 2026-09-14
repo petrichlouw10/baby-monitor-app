@@ -1,49 +1,85 @@
 <!DOCTYPE html>
-<html>
-<head><title>Ouer Monitor</title></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parent Unit - Monitor</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #0f172a; color: white; padding: 20px; }
+    video { width: 100%; max-width: 500px; border-radius: 12px; border: 3px solid #4ade80; background: #000; }
+  </style>
+</head>
 <body>
-  <h2>Ouer Eenheid (Monitor)</h2>
-  <video id="remoteVideo" autoplay playsinline style="width: 100%; max-width: 500px;"></video>
+  <h2>👪 Parent Unit (Monitoring Live)</h2>
+  <video id="remoteVideo" autoplay playsinline></video>
+  <p id="status">Connecting to camera...</p>
 
   <script src="https://socket.io"></script>
   <script>
-    const socket = io('https://onrender.com');
+    // 1. REPLACE WITH YOUR RENDER URL
+    const socket = io('https://baby-monitor-app.onrender.com');
     let peerConnection;
 
-    // Dieselfde TURN konfigurasie as die baba-foon
-    const rtcConfig = {
-      iceServers: [
-        { urls: "stun:stun.metered.ca:80" },
-        { urls: "turn:turn.metered.ca:80", username: "jou_gebruiker", credential: "jou_wagwoord" }
-      ]
-    };
+    // 2. REPLACE WITH YOUR METERED.CA TURN SERVER CREDENTIALS
+    var myPeerConnection = new RTCPeerConnection({
+  iceServers: [
+      {
+        urls: "stun:stun.relay.metered.ca:80",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80",
+        username: "e47adfffa26c6e292033a8a6",
+        credential: "vvdc52oF4zLitcmE",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "e47adfffa26c6e292033a8a6",
+        credential: "vvdc52oF4zLitcmE",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "e47adfffa26c6e292033a8a6",
+        credential: "vvdc52oF4zLitcmE",
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "e47adfffa26c6e292033a8a6",
+        credential: "vvdc52oF4zLitcmE",
+      },
+  ],
+});
 
-    socket.emit('join-room', { roomName: 'baba_kamer_1', password: 'MyBaba2026!' });
+    socket.emit('join-room', { roomName: 'nursery_room_1', password: 'MySecureBabyMonitor2026!' });
 
     socket.on('signal', async (data) => {
       if (data.signal.sdp && data.signal.sdp.type === 'offer') {
+        document.getElementById('status').innerText = "Receiving stream...";
         peerConnection = new RTCPeerConnection(rtcConfig);
         
         peerConnection.ontrack = (event) => {
           document.getElementById('remoteVideo').srcObject = event.streams[0];
+          document.getElementById('status').innerText = "Live feed active.";
         };
 
         peerConnection.onicecandidate = (event) => {
           if (event.candidate) {
-            socket.emit('signal', { roomName: 'baba_kamer_1', signal: { candidate: event.candidate } });
+            socket.emit('signal', { roomName: 'nursery_room_1', signal: { candidate: event.candidate } });
           }
         };
 
         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
-        socket.emit('signal', { roomName: 'baba_kamer_1', signal: { sdp: answer } });
+        socket.emit('signal', { roomName: 'nursery_room_1', signal: { sdp: answer } });
       } else if (data.signal.candidate) {
         await peerConnection.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
       }
     });
 
-    socket.on('error-msg', (msg) => { alert(msg); });
+    socket.on('error-msg', (msg) => {
+      document.getElementById('status').innerText = msg;
+      alert(msg);
+    });
   </script>
 </body>
 </html>
