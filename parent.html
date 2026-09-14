@@ -1,1 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head><title>Ouer Monitor</title></head>
+<body>
+  <h2>Ouer Eenheid (Monitor)</h2>
+  <video id="remoteVideo" autoplay playsinline style="width: 100%; max-width: 500px;"></video>
 
+  <script src="https://socket.io"></script>
+  <script>
+    const socket = io('https://onrender.com');
+    let peerConnection;
+
+    // Dieselfde TURN konfigurasie as die baba-foon
+    const rtcConfig = {
+      iceServers: [
+        { urls: "stun:stun.metered.ca:80" },
+        { urls: "turn:turn.metered.ca:80", username: "jou_gebruiker", credential: "jou_wagwoord" }
+      ]
+    };
+
+    socket.emit('join-room', { roomName: 'baba_kamer_1', password: 'MyBaba2026!' });
+
+    socket.on('signal', async (data) => {
+      if (data.signal.sdp && data.signal.sdp.type === 'offer') {
+        peerConnection = new RTCPeerConnection(rtcConfig);
+        
+        peerConnection.ontrack = (event) => {
+          document.getElementById('remoteVideo').srcObject = event.streams[0];
+        };
+
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.emit('signal', { roomName: 'baba_kamer_1', signal: { candidate: event.candidate } });
+          }
+        };
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.emit('signal', { roomName: 'baba_kamer_1', signal: { sdp: answer } });
+      } else if (data.signal.candidate) {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+      }
+    });
+
+    socket.on('error-msg', (msg) => { alert(msg); });
+  </script>
+</body>
+</html>
