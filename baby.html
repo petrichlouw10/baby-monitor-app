@@ -21,16 +21,33 @@
     let peerConnection;
 
     // 2. REPLACE WITH YOUR METERED.CA TURN SERVER CREDENTIALS
-    const rtcConfig = {
-      iceServers: [
-        { urls: "stun:stun.metered.ca:80" },
-        { 
-          urls: "turn:turn.metered.ca:80", 
-          username: "YOUR_METERED_USERNAME", 
-          credential: "YOUR_METERED_PASSWORD" 
-        }
-      ]
-    };
+    var myPeerConnection = new RTCPeerConnection({
+  iceServers: [
+      {
+        urls: "stun:stun.relay.metered.ca:80",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80",
+        username: "e47adfffa26c6e292033a8a6",
+        credential: "vvdc52oF4zLitcmE",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "e47adfffa26c6e292033a8a6",
+        credential: "vvdc52oF4zLitcmE",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "e47adfffa26c6e292033a8a6",
+        credential: "vvdc52oF4zLitcmE",
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "e47adfffa26c6e292033a8a6",
+        credential: "vvdc52oF4zLitcmE",
+      },
+  ],
+});
 
     async function init() {
       try {
